@@ -1,0 +1,4 @@
+public/
+sync.log
+venv/
+.env
