@@ -11,7 +11,7 @@ Obsidian vault (iCloud) ──sync-obsidian-hugo.py──▶ content/posts/*.md 
                         hugo.toml + themes/terminal + layouts/ ──hugo──▶ public/ ──▶ GitHub Pages
 ```
 - Theme templates come from `themes/terminal/`. Files in `layouts/` win over them.
-- The only override is `layouts/partials/extended_footer.html`, which fills the theme's footer hook. It adds a script that sets `target="_blank"` on every link that has no `target`, internal links included.
+- The only overrides are `layouts/_default/index.html` and `layouts/_default/list.html`. They are copies of the theme files with one change: the list summary is `.Summary | plainify | htmlUnescape | truncate 200`. If you update the theme, apply that change to the new copies again.
 - To customize the theme, use its hooks first: `extended_head.html` and `extended_footer.html`. Otherwise copy the theme file into `layouts/` at the same path. Leave `themes/terminal/` itself unedited.
 - `themes/terminal/` is plain vendored files, not a git submodule. Updating the theme means re-copying it from upstream.
 - The sync script can't run in CI because it reads a local iCloud vault. Content must be synced and committed locally before pushing.
@@ -19,7 +19,7 @@ Obsidian vault (iCloud) ──sync-obsidian-hugo.py──▶ content/posts/*.md 
 ## Key Directories
 - `content/posts/`: synced posts. Treat Obsidian as the source of truth, because a full sync overwrites this folder (see Gotchas).
 - `static/images/`: images embedded in posts, served at `/images/<name>`.
-- `layouts/partials/`: theme overrides.
+- `layouts/_default/`: theme overrides.
 - `themes/terminal/`: vendored theme. Its `exampleSite/`, `package.json` and lint configs aren't used by this site.
 - `archetypes/default.md`: template used by `hugo new`.
 - Generated or ignored paths: `public/` (build output), `venv/`, `.env`, `sync.log`. Leave these out of edits and commits.
@@ -52,13 +52,13 @@ python sync-obsidian-hugo.py "my post.md"    # one file, path relative to OBSIDI
   `archetypes/default.md` produces TOML (`+++`) instead. Use YAML for consistency, since the sync script never touches front matter. Posts with `draft: true` are left out of production builds.
 - **Images**: the Obsidian embed `![[Pasted image 20250524212810.png]]` is rewritten by `process_images()` to `![Pasted image 20250524212810.png](/images/Pasted%20image%2020250524212810.png)`, and the file is copied to `static/images/`. Only spaces are `%20`-encoded.
 - **Sync script style** (`sync-obsidian-hugo.py`): flat procedural functions, `sync_posts()` and `process_images()`. Errors are printed rather than raised, and the process exits 0 even when a sync fails. The script reads its four env vars at import time and calls `exit(1)` if any is empty: `OBSIDIAN_POSTS_DIR`, `HUGO_POSTS_DIR`, `OBSIDIAN_ATTACHMENTS_DIR`, `HUGO_STATIC_IMAGES_DIR`. The template is `.env.example`, and `.env` holds machine-specific absolute paths.
-- **Config**: `hugo.toml` uses the lowercase key `baseurl = "/"`, which CI overrides. It defines a single language, `[languages.vi]`, with English UI strings. Menus and logo live under `languages.vi.*`. There is no `en` language, no `i18n/`, and no custom taxonomies, so the default `tags` and `categories` apply.
+- **Config**: `hugo.toml` uses the lowercase key `baseurl = "/"`, which CI overrides. It defines a single language, `[languages.vi]`, with English UI strings. The logo lives under `languages.vi.*`, and there is no main menu. There is no `en` language, no `i18n/`, and no custom taxonomies, so the default `tags` and `categories` apply.
 
 ## Important Files
-- `hugo.toml`: site config, theme params (`contentTypeName = "posts"`, `autoCover = true`, `pagination.pagerSize = 5`, `markup.highlight.noClasses = false`), and the menu entries `/about` and `/showcase`. Neither menu target has content yet.
+- `hugo.toml`: site config and theme params (`contentTypeName = "posts"`, `autoCover = true`, `pagination.pagerSize = 5`, `markup.highlight.noClasses = false`).
 - `.github/workflows/hugo.yaml`: the build and Pages deploy workflow.
 - `sync-obsidian-hugo.py`: the content pipeline.
-- `layouts/partials/extended_footer.html`: the link-target script.
+- `layouts/_default/index.html`, `layouts/_default/list.html`: list templates with the truncated summary.
 
 ## Runtime/Tooling Preferences
 - **Hugo extended 0.147.2** is pinned in the workflow's `HUGO_VERSION`; bump it there. Match that version locally. The theme needs at least 0.90, but `pagination.pagerSize` requires a modern Hugo.
