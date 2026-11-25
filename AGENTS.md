@@ -11,7 +11,11 @@ Obsidian vault (iCloud) ──sync-obsidian-hugo.py──▶ content/posts/*.md 
                         hugo.toml + themes/terminal + layouts/ ──hugo──▶ public/ ──▶ GitHub Pages
 ```
 - Theme templates come from `themes/terminal/`. Files in `layouts/` win over them.
-- The only overrides are `layouts/_default/index.html` and `layouts/_default/list.html`. They are copies of the theme files with one change: the list summary is `.Summary | plainify | htmlUnescape | truncate 200`. If you update the theme, apply that change to the new copies again.
+- Overrides:
+  - `layouts/_default/index.html` and `layouts/_default/list.html` are copies of the theme files with one change: the list summary is `.Summary | plainify | htmlUnescape | truncate 200`.
+  - `layouts/partials/header.html` and `layouts/partials/footer.html` are copies of the theme files with one change each: `{{ partial "social.html" . }}` (Threads/TikTok/YouTube icon links, inline SVG) is inserted right after `.header__inner` and as the first child of `.footer`.
+  - `layouts/partials/extended_head.html` (theme hook) loads the Encode Sans Expanded font and holds the `.social` styles.
+  - If you update the theme, apply these changes to the new copies again.
 - To customize the theme, use its hooks first: `extended_head.html` and `extended_footer.html`. Otherwise copy the theme file into `layouts/` at the same path. Leave `themes/terminal/` itself unedited.
 - `themes/terminal/` is plain vendored files, not a git submodule. Updating the theme means re-copying it from upstream.
 - The sync script can't run in CI because it reads a local iCloud vault. Content must be synced and committed locally before pushing.
@@ -59,6 +63,7 @@ python sync-obsidian-hugo.py "my post.md"    # one file, path relative to OBSIDI
 - `.github/workflows/hugo.yaml`: the build and Pages deploy workflow.
 - `sync-obsidian-hugo.py`: the content pipeline.
 - `layouts/_default/index.html`, `layouts/_default/list.html`: list templates with the truncated summary.
+- `layouts/partials/social.html`: social icon links shown in header and footer.
 
 ## Runtime/Tooling Preferences
 - **Hugo extended 0.147.2** is pinned in the workflow's `HUGO_VERSION`; bump it there. Match that version locally. The theme needs at least 0.90, but `pagination.pagerSize` requires a modern Hugo.
